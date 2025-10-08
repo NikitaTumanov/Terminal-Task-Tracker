@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"os"
 
 	"github.com/NikitaTumanov/terminalTaskTracker/internal/handler"
@@ -13,17 +14,16 @@ func main() {
 
 	_, err := os.Stat(taskstorage.TasksPath)
 	if err == nil {
-		fmt.Printf("Файл '%s' существует\n", taskstorage.TasksPath)
+		log.Printf("Файл '%s' существует\n", taskstorage.TasksPath)
 	} else if os.IsNotExist(err) {
 		file, err := os.Create(taskstorage.TasksPath)
 		if err != nil {
 			panic(err)
 		}
 		file.Close()
-		fmt.Printf("Файл '%s' создан\n", taskstorage.TasksPath)
+		log.Printf("Файл '%s' создан\n", taskstorage.TasksPath)
 	} else {
-		fmt.Printf("Ошибка при проверке файла: %v\n", err)
-		panic(err)
+		log.Fatalf("Ошибка при проверке файла: %v\n", err)
 	}
 
 	handler.Handle()
