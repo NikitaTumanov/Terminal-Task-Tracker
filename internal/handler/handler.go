@@ -62,7 +62,7 @@ func Handle() {
 	var task taskstorage.Task
 
 	for {
-		fmt.Print("Enter command: ")
+		fmt.Print("Введите команду: ")
 		input := Read()
 		elements := splitInput(input)
 
@@ -125,7 +125,7 @@ func Handle() {
 			fmt.Println(result)
 		case "help":
 			fmt.Println(`	Add "<Task name>"
-	Update <Task Index> <New Task Name> <New Task Status>
+	Update <Task Index> "<New Task Name>" <New Task Status>
 		Task Statuses:
 			0 - Не начато
 			1 - В процессе
