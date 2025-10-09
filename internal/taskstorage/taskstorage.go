@@ -1,3 +1,7 @@
+// Package taskstorage реализует основное взаимодействие с сущностью "Task".
+// В пакете реализован основной функционал вводимых команд пользователем.
+// Таким образом, реализованы сериализация и десериализация JSON формата для данных,
+// возможность записи в файл и чтение из него.
 package taskstorage
 
 import (
@@ -11,6 +15,7 @@ import (
 
 type TaskStatus int
 
+// Task структура позволяет воздавать объекты этого типа и преобразовывать их в формат JSON.
 type Task struct {
 	Index  int        `json:"index"`
 	Name   string     `json:"name"`
@@ -27,6 +32,7 @@ const (
 var errInputElementsCount error = errors.New("передано некорректное количество аргументов")
 var errAtoi error = errors.New("введено некорректное число")
 
+// printTasks реализует вывод в терминал список задач с преобразованием их статуса в читаемый вид.
 func printTasks(tasks []Task) string {
 	var result string
 	for _, task := range tasks {
@@ -38,12 +44,16 @@ func printTasks(tasks []Task) string {
 			status = "В процессе"
 		case StatusNotDone:
 			status = "Не начато"
+		default:
+			status = "Некорректный статус задачи"
 		}
 		result += fmt.Sprintf("Index: %d\nName: %s\nStatus: %s\n", task.Index, task.Name, status)
 	}
 	return result
 }
 
+// addToFile преобразует полученные объекты типа Task и добавляет обновленный список
+// пользовательских задач в созданный файл.
 func addToFile(allTasks []Task) error {
 	tasksJSON, err := json.MarshalIndent(allTasks, "", "\t")
 	if err != nil {
@@ -58,6 +68,7 @@ func addToFile(allTasks []Task) error {
 	return nil
 }
 
+// getAllTasks реализует считывание всех задач из файла, преобразует их из JSON в объекты типа Task и возвращает их.
 func getAllTasks() ([]Task, error) {
 	data, err := os.ReadFile(TasksPath)
 	if err != nil {
@@ -77,6 +88,8 @@ func getAllTasks() ([]Task, error) {
 	return allTasks, nil
 }
 
+// Add является методом объекта типа Task и реализует добавление новой задачи в список задач. После чего возвращает
+// сообщение о результате действия.
 func (t Task) Add(elements []string) (string, error) {
 	if len(elements) != 1 {
 		return "", errInputElementsCount
@@ -88,9 +101,9 @@ func (t Task) Add(elements []string) (string, error) {
 	}
 
 	t.Index = len(allTasks) + 1
-	elements[0] = strings.ReplaceAll(elements[0],"\"", "")
-	t.Name = strings.ReplaceAll(elements[0],"'", "")
-	if t.Name == ""{
+	elements[0] = strings.ReplaceAll(elements[0], "\"", "")
+	t.Name = strings.ReplaceAll(elements[0], "'", "")
+	if t.Name == "" {
 		return "", errors.New("введено пустое имя задачи")
 	}
 
@@ -104,6 +117,8 @@ func (t Task) Add(elements []string) (string, error) {
 	return "Задача добавлена", nil
 }
 
+// Update является методом объекта типа Task и реализует обновление имени и статуса задачи
+// по указанному пользователем индексу задачи. После чего возвращает сообщение о результате действия.
 func (t Task) Update(elements []string) (string, error) {
 	if len(elements) != 3 {
 		return "", errInputElementsCount
@@ -142,6 +157,8 @@ func (t Task) Update(elements []string) (string, error) {
 	return "Задача не найдена", nil
 }
 
+// Delete является методом объекта типа Task и реализует удаление задачи по индексу из общего списка задач.
+// После чего возвращает сообщение о результате действия.
 func (t Task) Delete(elements []string) (string, error) {
 	if len(elements) != 1 {
 		return "", errInputElementsCount
@@ -164,7 +181,7 @@ func (t Task) Delete(elements []string) (string, error) {
 			if err != nil {
 				return "", err
 			}
-			
+
 			return printTasks(allTasks), nil
 		}
 	}
@@ -172,6 +189,8 @@ func (t Task) Delete(elements []string) (string, error) {
 	return "Задача не найдена", nil
 }
 
+// UpdateStatus является методом объекта типа Task и реализует обновление статуса задачи
+// по указанному пользователем индексу задачи. После чего возвращает сообщение о результате действия.
 func (t Task) UpdateStatus(elements []string) (string, error) {
 	if len(elements) != 2 {
 		return "", errInputElementsCount
@@ -209,6 +228,7 @@ func (t Task) UpdateStatus(elements []string) (string, error) {
 	return "Задача не найдена", nil
 }
 
+// AllTasks передает в функцию для вывода в терминал список всех существующих задач пользователя.
 func AllTasks() (string, error) {
 	allTasks, err := getAllTasks()
 	if err != nil {
@@ -217,6 +237,8 @@ func AllTasks() (string, error) {
 	return printTasks(allTasks), nil
 }
 
+// DoneTasks передает в функцию для вывода в терминал список всех существующих задач пользователя
+// со статусом "Выполнено".
 func DoneTasks() (string, error) {
 	var result []Task
 
@@ -233,6 +255,8 @@ func DoneTasks() (string, error) {
 	return printTasks(result), nil
 }
 
+// NotDoneTasks передает в функцию для вывода в терминал список всех существующих задач пользователя
+// со статусом "Не начато".
 func NotDoneTasks() (string, error) {
 	var result []Task
 
@@ -249,6 +273,8 @@ func NotDoneTasks() (string, error) {
 	return printTasks(result), nil
 }
 
+// InProgressTasks передает в функцию для вывода в терминал список всех существующих задач пользователя
+// со статусом "В процессе".
 func InProgressTasks() (string, error) {
 	var result []Task
 
