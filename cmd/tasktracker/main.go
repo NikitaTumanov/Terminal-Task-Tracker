@@ -1,3 +1,6 @@
+// Package main реализует точку запуска приложения.
+// В этом пакете создается .json файл (если его нет), в котором будут храниться созданные задачи пользователя.
+// После чего вызывается обработчик пользовательских команд.
 package main
 
 import (
@@ -9,6 +12,9 @@ import (
 	"github.com/NikitaTumanov/terminalTaskTracker/internal/taskstorage"
 )
 
+// main запускает работу приложения.
+// Функция создает в той же директории JSON файл для записи задач и вызывает метод обработки команд.
+// При возникновении ошибки при работе с файлом приложение прекращает работу.
 func main() {
 	fmt.Println("Task Manager Started")
 
@@ -20,7 +26,10 @@ func main() {
 		if err != nil {
 			panic(err)
 		}
-		file.Close()
+		err = file.Close()
+		if err != nil {
+			panic(err)
+		}
 		log.Printf("Файл '%s' создан\n", taskstorage.TasksPath)
 	} else {
 		log.Fatalf("Ошибка при проверке файла: %v\n", err)
