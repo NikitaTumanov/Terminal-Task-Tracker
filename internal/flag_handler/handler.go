@@ -2,27 +2,41 @@ package flaghandler
 
 import (
 	"fmt"
+	"time"
 
 	filemanager "github.com/NikitaTumanov/terminalTaskTracker/internal/file_manager"
 	"github.com/NikitaTumanov/terminalTaskTracker/internal/models"
 )
 
-type Storage struct {
-	Tasks []models.Task
+type storage struct {
+	tasks []models.Task
 }
 
-func New() (*Storage, error) {
+func New() (*storage, error) {
 	tasks, err := filemanager.GetAllTasks()
 	if err != nil {
-		return &Storage{}, fmt.Errorf("filemanager.GetAllTasks: %w", err)
+		return &storage{}, fmt.Errorf("filemanager.GetAllTasks: %w", err)
 	}
 
-	return &Storage{
-		Tasks: tasks,
+	return &storage{
+		tasks: tasks,
 	}, nil
 }
 
-func (s Storage) Handle() error {
+func (s *storage) Update() {
+	go func() {
+		var err error
+		for {
+			time.Sleep(models.TimeOut)
+			s.tasks, err = filemanager.GetAllTasks()
+			if err != nil {
+				fmt.Println("filemanager.GetAllTasks: ", err)
+			}
+		}
+	}()
+}
+
+func (s storage) Handle() error {
 	fmt.Println("321")
 	return nil
 }

@@ -1,5 +1,7 @@
 package models
 
+import "time"
+
 type TaskStatus int
 
 // Task структура позволяет воздавать объекты этого типа и преобразовывать их в формат JSON.
@@ -13,4 +15,5 @@ const (
 	StatusNotDone TaskStatus = iota
 	StatusInProgress
 	StatusDone
+	TimeOut = time.Second * 5
 )

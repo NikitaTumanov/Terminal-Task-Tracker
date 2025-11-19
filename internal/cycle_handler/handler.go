@@ -7,25 +7,38 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"time"
 
 	filemanager "github.com/NikitaTumanov/terminalTaskTracker/internal/file_manager"
 	"github.com/NikitaTumanov/terminalTaskTracker/internal/models"
 )
 
-type Storage struct {
-	Tasks []models.Task
+type storage struct {
+	tasks []models.Task
 }
 
-func New() (*Storage, error) {
+func New() (*storage, error) {
 	tasks, err := filemanager.GetAllTasks()
 	if err != nil {
-		return &Storage{}, fmt.Errorf("filemanager.GetAllTasks: %w", err)
+		return &storage{}, fmt.Errorf("filemanager.GetAllTasks: %w", err)
 	}
 
-	return &Storage{
-		Tasks: tasks,
+	return &storage{
+		tasks: tasks,
 	}, nil
+}
 
+func (s *storage) Update() {
+	go func() {
+		var err error
+		for {
+			time.Sleep(models.TimeOut)
+			s.tasks, err = filemanager.GetAllTasks()
+			if err != nil {
+				fmt.Println("filemanager.GetAllTasks: ", err)
+			}
+		}
+	}()
 }
 
 // Read выполняет чтение команд из терминала до тех пор, пока ввод будет пустым,
@@ -85,7 +98,7 @@ func splitInput(input string) []string {
 // Handle вызывает функцию считывания пользовательского ввода до тех пор, пока не поступит команда Exit.
 // В иных случаях функция вызывает соответствующий метод в зависимости от команды пользователя
 // и выводит результат в терминал.
-func (s *Storage) Handle() error {
+func (s *storage) Handle() error {
 	for {
 		fmt.Print("Введите команду: ")
 		input := read()
@@ -97,7 +110,7 @@ func (s *Storage) Handle() error {
 				fmt.Println(filemanager.ErrInputElementsCount)
 				continue
 			}
-			result, err := filemanager.Add(&s.Tasks, elements[1:])
+			result, err := filemanager.Add(&s.tasks, elements[1:])
 			if err != nil {
 				fmt.Println(err)
 				continue
@@ -109,7 +122,7 @@ func (s *Storage) Handle() error {
 				fmt.Println(filemanager.ErrInputElementsCount)
 				continue
 			}
-			result, err := filemanager.Update(&s.Tasks, elements[1:])
+			result, err := filemanager.Update(&s.tasks, elements[1:])
 			if err != nil {
 				fmt.Println(err)
 				continue
@@ -121,7 +134,7 @@ func (s *Storage) Handle() error {
 				fmt.Println(filemanager.ErrInputElementsCount)
 				continue
 			}
-			result, err := filemanager.Delete(&s.Tasks, elements[1:])
+			result, err := filemanager.Delete(&s.tasks, elements[1:])
 			if err != nil {
 				fmt.Println(err)
 				continue
@@ -133,7 +146,7 @@ func (s *Storage) Handle() error {
 				fmt.Println(filemanager.ErrInputElementsCount)
 				continue
 			}
-			result, err := filemanager.UpdateStatus(&s.Tasks, elements[1:])
+			result, err := filemanager.UpdateStatus(&s.tasks, elements[1:])
 			if err != nil {
 				fmt.Println(err)
 				continue
@@ -141,16 +154,16 @@ func (s *Storage) Handle() error {
 			fmt.Println(result)
 
 		case "alltasks":
-			fmt.Println(filemanager.AllTasks(&s.Tasks))
+			fmt.Println(filemanager.AllTasks(&s.tasks))
 
 		case "donetasks":
-			fmt.Println(filemanager.DoneTasks(&s.Tasks))
+			fmt.Println(filemanager.DoneTasks(&s.tasks))
 
 		case "notdonetasks":
-			fmt.Println(filemanager.NotDoneTasks(&s.Tasks))
+			fmt.Println(filemanager.NotDoneTasks(&s.tasks))
 
 		case "inprogresstasks":
-			fmt.Println(filemanager.InProgressTasks(&s.Tasks))
+			fmt.Println(filemanager.InProgressTasks(&s.tasks))
 
 		case "help":
 			fmt.Println(`	Add "<Task name>"
@@ -176,6 +189,6 @@ func (s *Storage) Handle() error {
 		default:
 			fmt.Println("Введена некорректная команда")
 		}
-		fmt.Println(s.Tasks)
+		fmt.Println(s.tasks)
 	}
 }

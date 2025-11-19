@@ -15,6 +15,7 @@ import (
 
 type handler interface {
 	Handle() error
+	Update()
 }
 
 // main запускает работу приложения.
@@ -51,6 +52,7 @@ func main() {
 		return
 	}
 
+	handler.Update()
 	err = handler.Handle()
 	if err != nil {
 		fmt.Println(err)
