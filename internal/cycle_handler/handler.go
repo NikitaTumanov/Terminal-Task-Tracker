@@ -1,21 +1,37 @@
 // Package handler реализует обработку команд, которые поступают от пользователя.
 // Команда разбивается на атрибуты и передается в соответствующую функцию в зависимости от ожидаемого результата.
-package handler
+package cyclehandler
 
 import (
 	"bufio"
 	"fmt"
-	"log"
 	"os"
 	"strings"
 
-	"github.com/NikitaTumanov/terminalTaskTracker/internal/taskstorage"
+	filemanager "github.com/NikitaTumanov/terminalTaskTracker/internal/file_manager"
+	"github.com/NikitaTumanov/terminalTaskTracker/internal/models"
 )
+
+type Storage struct {
+	Tasks []models.Task
+}
+
+func New() (*Storage, error) {
+	tasks, err := filemanager.GetAllTasks()
+	if err != nil {
+		return &Storage{}, fmt.Errorf("filemanager.GetAllTasks: %w", err)
+	}
+
+	return &Storage{
+		Tasks: tasks,
+	}, nil
+
+}
 
 // Read выполняет чтение команд из терминала до тех пор, пока ввод будет пустым,
 // и возвращает прочитанную команду в виде строки.
 // При вводе пустой строки в терминал выведется подсказка для пользователя.
-func Read() string {
+func read() string {
 	for {
 		reader := bufio.NewReader(os.Stdin)
 		input, _ := reader.ReadString('\n')
@@ -69,71 +85,73 @@ func splitInput(input string) []string {
 // Handle вызывает функцию считывания пользовательского ввода до тех пор, пока не поступит команда Exit.
 // В иных случаях функция вызывает соответствующий метод в зависимости от команды пользователя
 // и выводит результат в терминал.
-func Handle() {
-	var task taskstorage.Task
-
+func (s *Storage) Handle() error {
 	for {
 		fmt.Print("Введите команду: ")
-		input := Read()
+		input := read()
 		elements := splitInput(input)
 
 		switch strings.ToLower(elements[0]) {
 		case "add":
-			result, err := task.Add(elements[1:])
+			if len(elements) != 2 {
+				fmt.Println(filemanager.ErrInputElementsCount)
+				continue
+			}
+			result, err := filemanager.Add(&s.Tasks, elements[1:])
 			if err != nil {
-				log.Println(err)
+				fmt.Println(err)
 				continue
 			}
 			fmt.Println(result)
+
 		case "update":
-			result, err := task.Update(elements[1:])
+			if len(elements) != 4 {
+				fmt.Println(filemanager.ErrInputElementsCount)
+				continue
+			}
+			result, err := filemanager.Update(&s.Tasks, elements[1:])
 			if err != nil {
-				log.Println(err)
+				fmt.Println(err)
 				continue
 			}
 			fmt.Println(result)
+
 		case "delete":
-			result, err := task.Delete(elements[1:])
+			if len(elements) != 2 {
+				fmt.Println(filemanager.ErrInputElementsCount)
+				continue
+			}
+			result, err := filemanager.Delete(&s.Tasks, elements[1:])
 			if err != nil {
-				log.Println(err)
+				fmt.Println(err)
 				continue
 			}
 			fmt.Println(result)
+
 		case "updatestatus":
-			result, err := task.UpdateStatus(elements[1:])
+			if len(elements) != 3 {
+				fmt.Println(filemanager.ErrInputElementsCount)
+				continue
+			}
+			result, err := filemanager.UpdateStatus(&s.Tasks, elements[1:])
 			if err != nil {
-				log.Println(err)
+				fmt.Println(err)
 				continue
 			}
 			fmt.Println(result)
+
 		case "alltasks":
-			result, err := taskstorage.AllTasks()
-			if err != nil {
-				log.Println(err)
-				continue
-			}
-			fmt.Println(result)
+			fmt.Println(filemanager.AllTasks(&s.Tasks))
+
 		case "donetasks":
-			result, err := taskstorage.DoneTasks()
-			if err != nil {
-				log.Println(err)
-				continue
-			}
-			fmt.Println(result)
+			fmt.Println(filemanager.DoneTasks(&s.Tasks))
+
 		case "notdonetasks":
-			result, err := taskstorage.NotDoneTasks()
-			if err != nil {
-				log.Println(err)
-				continue
-			}
-			fmt.Println(result)
+			fmt.Println(filemanager.NotDoneTasks(&s.Tasks))
+
 		case "inprogresstasks":
-			result, err := taskstorage.InProgressTasks()
-			if err != nil {
-				log.Println(err)
-				continue
-			}
-			fmt.Println(result)
+			fmt.Println(filemanager.InProgressTasks(&s.Tasks))
+
 		case "help":
 			fmt.Println(`	Add "<Task name>"
 	Update <Task Index> "<New Task Name>" <New Task Status>
@@ -154,9 +172,10 @@ func Handle() {
 	Help
 	Exit`)
 		case "exit":
-			return
+			return nil
 		default:
 			fmt.Println("Введена некорректная команда")
 		}
+		fmt.Println(s.Tasks)
 	}
 }
