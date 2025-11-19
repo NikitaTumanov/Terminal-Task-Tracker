@@ -22,8 +22,16 @@ type handler interface {
 // Функция создает в той же директории JSON файл для записи задач и вызывает метод обработки команд.
 // При возникновении ошибки при работе с файлом приложение прекращает работу.
 func main() {
-	fmt.Println("Task Manager Started")
-	var handler handler
+	var (
+		handler    handler
+		mode       = flag.String("mode", "flag", "mode")
+		command    string
+		taskIndex  = flag.Int("index", -1, "index")
+		taskName   = flag.String("name", "", "name")
+		taskStatus = flag.String("status", "", "status")
+	)
+	flag.StringVar(&command, "c", "", "command")
+	flag.Parse()
 
 	err := filemanager.CreateFile()
 	if err != nil {
@@ -31,25 +39,18 @@ func main() {
 		return
 	}
 
-	var mode = flag.String("mode", "flag", "mode")
-	flag.Parse()
-
-	if strings.EqualFold(strings.ToLower(*mode), "interactive") {
+	if command == "" {
 		handler, err = cyclehandler.New()
 		if err != nil {
 			fmt.Println(err)
 		}
 
 	} else if strings.EqualFold(strings.ToLower(*mode), "flag") {
-		handler, err = flaghandler.New()
+		handler, err = flaghandler.New(*taskIndex, command, *taskName, *taskStatus)
 		if err != nil {
 			fmt.Println(err)
 		}
 
-	} else {
-		err := fmt.Errorf("введено некорректное значение режима работы mode: %s", *mode)
-		fmt.Println(err, "\nОжидается: --mode: interactive|flag(по умолчанию)")
-		return
 	}
 
 	handler.Update()

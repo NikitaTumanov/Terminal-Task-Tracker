@@ -99,6 +99,7 @@ func splitInput(input string) []string {
 // В иных случаях функция вызывает соответствующий метод в зависимости от команды пользователя
 // и выводит результат в терминал.
 func (s *storage) Handle() error {
+	fmt.Println("Task Manager Started")
 	for {
 		fmt.Print("Введите команду: ")
 		input := read()
@@ -189,6 +190,5 @@ func (s *storage) Handle() error {
 		default:
 			fmt.Println("Введена некорректная команда")
 		}
-		fmt.Println(s.tasks)
 	}
 }

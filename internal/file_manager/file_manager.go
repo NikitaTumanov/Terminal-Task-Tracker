@@ -15,8 +15,11 @@ const (
 	tasksPath = "tasks.json"
 )
 
-var ErrInputElementsCount error = errors.New("передано некорректное количество аргументов")
-var ErrAtoi error = errors.New("введено некорректное число")
+var (
+	ErrInputElementsCount error = errors.New("передано некорректное количество аргументов")
+	errAtoi               error = errors.New("передано некорректное число")
+	errIncorrectStatus    error = errors.New("передан некорректный статус задачи")
+)
 
 func CreateFile() error {
 	_, err := os.Stat(tasksPath)
@@ -130,14 +133,17 @@ func Add(tasks *[]models.Task, elements []string) (string, error) {
 func Update(tasks *[]models.Task, elements []string) (string, error) {
 	index, err := strconv.Atoi(elements[0])
 	if err != nil {
-		return "", ErrAtoi
+		return "", errAtoi
 	}
 
 	for i, task := range *tasks {
 		if task.Index == index {
 			status, err := strconv.Atoi(elements[2])
 			if err != nil {
-				return "", ErrAtoi
+				return "", errAtoi
+			}
+			if status < 0 || status > 2 {
+				return "", errIncorrectStatus
 			}
 
 			(*tasks)[i].Name = elements[1]
@@ -160,7 +166,7 @@ func Update(tasks *[]models.Task, elements []string) (string, error) {
 func Delete(tasks *[]models.Task, elements []string) (string, error) {
 	index, err := strconv.Atoi(elements[0])
 	if err != nil {
-		return "", ErrAtoi
+		return "", errAtoi
 	}
 
 	for i, task := range *tasks {
@@ -188,14 +194,17 @@ func Delete(tasks *[]models.Task, elements []string) (string, error) {
 func UpdateStatus(tasks *[]models.Task, elements []string) (string, error) {
 	index, err := strconv.Atoi(elements[0])
 	if err != nil {
-		return "", ErrAtoi
+		return "", errAtoi
 	}
 
 	for i, task := range *tasks {
 		if task.Index == index {
 			status, err := strconv.Atoi(elements[1])
 			if err != nil {
-				return "", ErrAtoi
+				return "", errAtoi
+			}
+			if status < 0 || status > 2 {
+				return "", errIncorrectStatus
 			}
 
 			(*tasks)[i].Status = models.TaskStatus(status)
