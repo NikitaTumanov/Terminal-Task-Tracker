@@ -155,16 +155,28 @@ func (s *storage) Handle() error {
 			fmt.Println(result)
 
 		case "alltasks":
-			fmt.Println(filemanager.AllTasks(&s.tasks))
+			err := filemanager.AllTasks(&s.tasks)
+			if err != nil {
+				fmt.Println(err)
+			}
 
 		case "donetasks":
-			fmt.Println(filemanager.DoneTasks(&s.tasks))
+			err := filemanager.DoneTasks(&s.tasks)
+			if err != nil {
+				fmt.Println(err)
+			}
 
 		case "notdonetasks":
-			fmt.Println(filemanager.NotDoneTasks(&s.tasks))
+			err := filemanager.NotDoneTasks(&s.tasks)
+			if err != nil {
+				fmt.Println(err)
+			}
 
 		case "inprogresstasks":
-			fmt.Println(filemanager.InProgressTasks(&s.tasks))
+			err := filemanager.InProgressTasks(&s.tasks)
+			if err != nil {
+				fmt.Println(err)
+			}
 
 		case "help":
 			fmt.Println(`	Add "<Task name>"

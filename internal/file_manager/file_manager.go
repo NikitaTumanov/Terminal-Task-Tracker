@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"os/exec"
 	"strconv"
 	"strings"
 
@@ -68,8 +69,8 @@ func GetAllTasks() ([]models.Task, error) {
 }
 
 // printTasks реализует вывод в терминал список задач с преобразованием их статуса в читаемый вид.
-func printTasks(tasks []models.Task) string {
-	var result string
+func printTasks(tasks []models.Task) error {
+	var resBuild strings.Builder
 	for _, task := range tasks {
 		var status string
 		switch task.Status {
@@ -82,10 +83,15 @@ func printTasks(tasks []models.Task) string {
 		default:
 			status = "Некорректный статус задачи"
 		}
-		result += fmt.Sprintf("Index: %d\tName: %s\tStatus: %s\n", task.Index, task.Name, status)
+		resBuild.WriteString(fmt.Sprintf("Index: %d\tName: %s\tStatus: %s\n", task.Index, task.Name, status))
 	}
 
-	return result
+	cmd := exec.Command("less")
+	cmd.Stdin = strings.NewReader(resBuild.String())
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+
+	return cmd.Run()
 }
 
 // addToFile преобразует полученные объекты типа Task и добавляет обновленный список
@@ -222,13 +228,17 @@ func UpdateStatus(tasks *[]models.Task, elements []string) (string, error) {
 }
 
 // AllTasks передает в функцию для вывода в терминал список всех существующих задач пользователя.
-func AllTasks(tasks *[]models.Task) string {
-	return printTasks(*tasks)
+func AllTasks(tasks *[]models.Task) error {
+	err := printTasks(*tasks)
+	if err != nil {
+		return fmt.Errorf("printTasks: %w", err)
+	}
+	return nil
 }
 
 // DoneTasks передает в функцию для вывода в терминал список всех существующих задач пользователя
 // со статусом "Выполнено".
-func DoneTasks(tasks *[]models.Task) string {
+func DoneTasks(tasks *[]models.Task) error {
 	var result []models.Task
 
 	for _, task := range *tasks {
@@ -236,12 +246,17 @@ func DoneTasks(tasks *[]models.Task) string {
 			result = append(result, task)
 		}
 	}
-	return printTasks(result)
+
+	err := printTasks(result)
+	if err != nil {
+		return fmt.Errorf("printTasks: %w", err)
+	}
+	return nil
 }
 
 // NotDoneTasks передает в функцию для вывода в терминал список всех существующих задач пользователя
 // со статусом "Не начато".
-func NotDoneTasks(tasks *[]models.Task) string {
+func NotDoneTasks(tasks *[]models.Task) error {
 	var result []models.Task
 
 	for _, task := range *tasks {
@@ -249,12 +264,17 @@ func NotDoneTasks(tasks *[]models.Task) string {
 			result = append(result, task)
 		}
 	}
-	return printTasks(result)
+
+	err := printTasks(result)
+	if err != nil {
+		return fmt.Errorf("printTasks: %w", err)
+	}
+	return nil
 }
 
 // InProgressTasks передает в функцию для вывода в терминал список всех существующих задач пользователя
 // со статусом "В процессе".
-func InProgressTasks(tasks *[]models.Task) string {
+func InProgressTasks(tasks *[]models.Task) error {
 	var result []models.Task
 
 	for _, task := range *tasks {
@@ -262,5 +282,10 @@ func InProgressTasks(tasks *[]models.Task) string {
 			result = append(result, task)
 		}
 	}
-	return printTasks(result)
+
+	err := printTasks(result)
+	if err != nil {
+		return fmt.Errorf("printTasks: %w", err)
+	}
+	return nil
 }
