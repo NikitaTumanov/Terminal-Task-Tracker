@@ -6,7 +6,6 @@ package main
 import (
 	"flag"
 	"fmt"
-	"strings"
 
 	cyclehandler "github.com/NikitaTumanov/terminalTaskTracker/internal/cycle_handler"
 	filemanager "github.com/NikitaTumanov/terminalTaskTracker/internal/file_manager"
@@ -24,11 +23,11 @@ type handler interface {
 func main() {
 	var (
 		handler    handler
-		mode       = flag.String("mode", "flag", "mode")
 		command    string
 		taskIndex  = flag.Int("index", -1, "index")
 		taskName   = flag.String("name", "", "name")
 		taskStatus = flag.String("status", "", "status")
+		helpFlag   = flag.Bool("help", false, "help")
 	)
 	flag.StringVar(&command, "c", "", "command")
 	flag.Parse()
@@ -39,14 +38,14 @@ func main() {
 		return
 	}
 
-	if command == "" {
+	if command == "" && !(*helpFlag) {
 		handler, err = cyclehandler.New()
 		if err != nil {
 			fmt.Println(err)
 		}
 
-	} else if strings.EqualFold(strings.ToLower(*mode), "flag") {
-		handler, err = flaghandler.New(*taskIndex, command, *taskName, *taskStatus)
+	} else {
+		handler, err = flaghandler.New(*taskIndex, command, *taskName, *taskStatus, *helpFlag)
 		if err != nil {
 			fmt.Println(err)
 		}

@@ -17,9 +17,10 @@ type storage struct {
 	command    string
 	taskName   string
 	taskStatus string
+	helpFlag   bool
 }
 
-func New(taskIndex int, command, taskName, taskStatus string) (*storage, error) {
+func New(taskIndex int, command, taskName, taskStatus string, helpFlag bool) (*storage, error) {
 	tasks, err := filemanager.GetAllTasks()
 	if err != nil {
 		return &storage{}, fmt.Errorf("filemanager.GetAllTasks: %w", err)
@@ -31,6 +32,7 @@ func New(taskIndex int, command, taskName, taskStatus string) (*storage, error) 
 		command:    command,
 		taskName:   taskName,
 		taskStatus: taskStatus,
+		helpFlag:   helpFlag,
 	}, nil
 }
 
@@ -47,7 +49,31 @@ func (s *storage) Update() {
 	}()
 }
 
+func printHelp() {
+	fmt.Println(`	Add Task: -c add --name="<Task name>"
+	Update Task: -c update --index=<Task Index> --name="<New Task Name>" --status=<New Task Status>
+		Task Statuses:
+			0 - Не начато
+			1 - В процессе
+			2 - Выполнено
+	Delete Task: -c delete --index=<Task Index>
+	Update Task Status: -c updateStatus --index=<Task Index> --status=<New Task Status>
+		Task Statuses:
+			0 - Не начато
+			1 - В процессе
+			2 - Выполнено
+	Show All Tasks: -c allTasks
+	Show Done Tasks: -c doneTasks
+	Show Not Done Tasks: -c notDoneTasks
+	Show Tasks In Progress: -c inProgressTasks`)
+}
+
 func (s *storage) Handle() error {
+	if s.helpFlag {
+		printHelp()
+		return nil
+	}
+
 	switch strings.ToLower(s.command) {
 	case "add":
 		if s.taskName == "" {
