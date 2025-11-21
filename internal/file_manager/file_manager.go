@@ -17,15 +17,21 @@ const (
 )
 
 var (
-	ErrInputElementsCount error = errors.New("передано некорректное количество аргументов")
-	errAtoi               error = errors.New("передано некорректное число")
-	errIncorrectStatus    error = errors.New("передан некорректный статус задачи")
+	ErrInputElementsCount error = errors.New("incorrect number of arguments passed")
+	errAtoi               error = errors.New("an invalid number was passed")
+	errIncorrectStatus    error = errors.New("an incorrect task status was passed")
+	ErrNameNotExists      error = errors.New("name is missing from the passed arguments")
+	ErrIndexNotExists     error = errors.New("index is missing from the passed arguments")
+	ErrStatusNotExists    error = errors.New("status is missing from the passed arguments")
+	ErrInvalidCommand     error = errors.New("an invalid command was entered")
 )
 
+// CreateFile проверяет наличие файла в текущей директории.
+// Если его нет, то он будет создан.
 func CreateFile() error {
 	_, err := os.Stat(tasksPath)
 	if err == nil {
-		fmt.Printf("Файл '%s' существует\n", tasksPath)
+		//fmt.Printf("Файл '%s' существует\n", tasksPath)
 		return nil
 
 	} else if os.IsNotExist(err) {
@@ -39,16 +45,16 @@ func CreateFile() error {
 			return fmt.Errorf("close file: %w", err)
 		}
 
-		fmt.Printf("Файл '%s' создан\n", tasksPath)
+		fmt.Printf("File '%s' created\n", tasksPath)
 
 	} else {
-		return fmt.Errorf("проверка файла: %w", err)
+		return fmt.Errorf("file check: %w", err)
 	}
 
 	return nil
 }
 
-// getAllTasks реализует считывание всех задач из файла, преобразует их из JSON в объекты типа Task и возвращает их.
+// GetAllTasks реализует считывание всех задач из файла, преобразует их из JSON в объекты типа Task и возвращает их.
 func GetAllTasks() ([]models.Task, error) {
 	data, err := os.ReadFile(tasksPath)
 	if err != nil {
@@ -75,13 +81,13 @@ func printTasks(tasks []models.Task) error {
 		var status string
 		switch task.Status {
 		case models.StatusDone:
-			status = "Выполнено"
+			status = "Done"
 		case models.StatusInProgress:
-			status = "В процессе"
+			status = "In progress"
 		case models.StatusNotDone:
-			status = "Не начато"
+			status = "Not started"
 		default:
-			status = "Некорректный статус задачи"
+			status = "Incorrect task status"
 		}
 		resBuild.WriteString(fmt.Sprintf("Index: %d\tName: %s\tStatus: %s\n", task.Index, task.Name, status))
 	}
@@ -99,23 +105,23 @@ func printTasks(tasks []models.Task) error {
 func addToFile(allTasks []models.Task) error {
 	tasksJSON, err := json.MarshalIndent(allTasks, "", "\t")
 	if err != nil {
-		return errors.New("ошибка при сериализации в JSON")
+		return errors.New("error serializing to JSON")
 	}
 
 	err = os.WriteFile(tasksPath, []byte(tasksJSON), 0644)
 	if err != nil {
-		return errors.New("ошибка при записи в файл")
+		return errors.New("error writing to file")
 	}
 
 	return nil
 }
 
 // Add является методом объекта типа Task и реализует добавление новой задачи в список задач. После чего возвращает
-// сообщение о результате действия.
+// сообщение о результате действия или ошибку.
 func Add(tasks *[]models.Task, elements []string) (string, error) {
 	newName := strings.ReplaceAll(strings.ReplaceAll(elements[0], "\"", ""), "'", "")
 	if newName == "" {
-		return "", errors.New("введено пустое имя задачи")
+		return "", ErrNameNotExists
 	}
 
 	newTask := models.Task{
@@ -131,12 +137,17 @@ func Add(tasks *[]models.Task, elements []string) (string, error) {
 		return "", fmt.Errorf("addToFile: %w", err)
 	}
 
-	return "Задача добавлена", nil
+	return "Task added", nil
 }
 
 // Update является методом объекта типа Task и реализует обновление имени и статуса задачи
-// по указанному пользователем индексу задачи. После чего возвращает сообщение о результате действия.
+// по указанному пользователем индексу задачи. После чего возвращает сообщение о результате
+// действия или ошибку.
 func Update(tasks *[]models.Task, elements []string) (string, error) {
+	if elements[0] == "" {
+		return "", ErrIndexNotExists
+	}
+
 	index, err := strconv.Atoi(elements[0])
 	if err != nil {
 		return "", errAtoi
@@ -144,12 +155,19 @@ func Update(tasks *[]models.Task, elements []string) (string, error) {
 
 	for i, task := range *tasks {
 		if task.Index == index {
+			if elements[2] == "" {
+				return "", ErrStatusNotExists
+			}
 			status, err := strconv.Atoi(elements[2])
 			if err != nil {
 				return "", errAtoi
 			}
 			if status < 0 || status > 2 {
 				return "", errIncorrectStatus
+			}
+
+			if elements[1] == "" {
+				return "", ErrNameNotExists
 			}
 
 			(*tasks)[i].Name = elements[1]
@@ -160,16 +178,20 @@ func Update(tasks *[]models.Task, elements []string) (string, error) {
 				return "", fmt.Errorf("addToFile: %w", err)
 			}
 
-			return "Задача обновлена", nil
+			return "Task updated", nil
 		}
 	}
 
-	return "Задача не найдена", nil
+	return "Task not found", nil
 }
 
 // Delete является методом объекта типа Task и реализует удаление задачи по индексу из общего списка задач.
-// После чего возвращает сообщение о результате действия.
+// После чего возвращает сообщение о результате действия или ошибку.
 func Delete(tasks *[]models.Task, elements []string) (string, error) {
+	if elements[0] == "" {
+		return "", ErrIndexNotExists
+	}
+
 	index, err := strconv.Atoi(elements[0])
 	if err != nil {
 		return "", errAtoi
@@ -188,16 +210,21 @@ func Delete(tasks *[]models.Task, elements []string) (string, error) {
 				return "", fmt.Errorf("addToFile: %w", err)
 			}
 
-			return "Задача удалена", nil
+			return "Task deleted", nil
 		}
 	}
 
-	return "Задача не найдена", nil
+	return "Task not found", nil
 }
 
 // UpdateStatus является методом объекта типа Task и реализует обновление статуса задачи
-// по указанному пользователем индексу задачи. После чего возвращает сообщение о результате действия.
+// по указанному пользователем индексу задачи. После чего возвращает сообщение о результате
+// действия или ошибку.
 func UpdateStatus(tasks *[]models.Task, elements []string) (string, error) {
+	if elements[0] == "" {
+		return "", ErrIndexNotExists
+	}
+
 	index, err := strconv.Atoi(elements[0])
 	if err != nil {
 		return "", errAtoi
@@ -205,6 +232,9 @@ func UpdateStatus(tasks *[]models.Task, elements []string) (string, error) {
 
 	for i, task := range *tasks {
 		if task.Index == index {
+			if elements[1] == "" {
+				return "", ErrStatusNotExists
+			}
 			status, err := strconv.Atoi(elements[1])
 			if err != nil {
 				return "", errAtoi
@@ -220,11 +250,11 @@ func UpdateStatus(tasks *[]models.Task, elements []string) (string, error) {
 				return "", fmt.Errorf("addToFile: %w", err)
 			}
 
-			return "Задача обновлена", nil
+			return "Task updated", nil
 		}
 	}
 
-	return "Задача не найдена", nil
+	return "Task not found", nil
 }
 
 // AllTasks передает в функцию для вывода в терминал список всех существующих задач пользователя.

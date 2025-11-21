@@ -1,7 +1,6 @@
 package flaghandler
 
 import (
-	"errors"
 	"fmt"
 	"strconv"
 	"strings"
@@ -11,6 +10,7 @@ import (
 	"github.com/NikitaTumanov/terminalTaskTracker/internal/models"
 )
 
+// storage вместе с задачами хранит флаги, отправленные пользователем.
 type storage struct {
 	tasks      []models.Task
 	taskIndex  int
@@ -36,6 +36,7 @@ func New(taskIndex int, command, taskName, taskStatus string, helpFlag bool) (*s
 	}, nil
 }
 
+// Update запускает горутину для обновления слайса в структуре актуальной информаией из JSON.
 func (s *storage) Update() {
 	go func() {
 		var err error
@@ -49,25 +50,28 @@ func (s *storage) Update() {
 	}()
 }
 
+// printHelp выводит подсказку при получении флага --help.
 func printHelp() {
 	fmt.Println(`	Add Task: -c add --name="<Task name>"
 	Update Task: -c update --index=<Task Index> --name="<New Task Name>" --status=<New Task Status>
 		Task Statuses:
-			0 - Не начато
-			1 - В процессе
-			2 - Выполнено
+			0 - Not started
+			1 - In progress
+			2 - Done
 	Delete Task: -c delete --index=<Task Index>
 	Update Task Status: -c updateStatus --index=<Task Index> --status=<New Task Status>
 		Task Statuses:
-			0 - Не начато
-			1 - В процессе
-			2 - Выполнено
+			0 - Not started
+			1 - In progress
+			2 - Done
 	Show All Tasks: -c allTasks
 	Show Done Tasks: -c doneTasks
 	Show Not Done Tasks: -c notDoneTasks
 	Show Tasks In Progress: -c inProgressTasks`)
 }
 
+// Handle вызывает соответствующую функцию в зависимости от переданных
+// пользователем аргументов и выводит результат в терминал.
 func (s *storage) Handle() error {
 	if s.helpFlag {
 		printHelp()
@@ -77,7 +81,7 @@ func (s *storage) Handle() error {
 	switch strings.ToLower(s.command) {
 	case "add":
 		if s.taskName == "" {
-			return errors.New("отсутствует name в переданных аргументах")
+			return filemanager.ErrNameNotExists
 		}
 		result, err := filemanager.Add(&s.tasks, []string{s.taskName})
 		if err != nil {
@@ -87,13 +91,13 @@ func (s *storage) Handle() error {
 
 	case "update":
 		if s.taskIndex == -1 {
-			return errors.New("отсутствует index в переданных аргументах")
+			return filemanager.ErrIndexNotExists
 		}
 		if s.taskName == "" {
-			return errors.New("отсутствует name в переданных аргументах")
+			return filemanager.ErrNameNotExists
 		}
 		if s.taskStatus == "" {
-			return errors.New("отсутствует status в переданных аргументах")
+			return filemanager.ErrStatusNotExists
 		}
 		result, err := filemanager.Update(&s.tasks, []string{strconv.Itoa(s.taskIndex), s.taskName, s.taskStatus})
 		if err != nil {
@@ -103,7 +107,7 @@ func (s *storage) Handle() error {
 
 	case "delete":
 		if s.taskIndex == -1 {
-			return errors.New("отсутствует index в переданных аргументах")
+			return filemanager.ErrIndexNotExists
 		}
 		result, err := filemanager.Delete(&s.tasks, []string{strconv.Itoa(s.taskIndex)})
 		if err != nil {
@@ -113,10 +117,10 @@ func (s *storage) Handle() error {
 
 	case "updatestatus":
 		if s.taskIndex == -1 {
-			return errors.New("отсутствует index в переданных аргументах")
+			return filemanager.ErrIndexNotExists
 		}
 		if s.taskStatus == "" {
-			return errors.New("отсутствует status в переданных аргументах")
+			return filemanager.ErrStatusNotExists
 		}
 		result, err := filemanager.UpdateStatus(&s.tasks, []string{strconv.Itoa(s.taskIndex), s.taskStatus})
 		if err != nil {
@@ -142,7 +146,7 @@ func (s *storage) Handle() error {
 
 	case "help":
 	default:
-		return errors.New("введена некорректная команда")
+		return filemanager.ErrInvalidCommand
 	}
 
 	return nil

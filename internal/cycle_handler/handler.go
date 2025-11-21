@@ -1,4 +1,4 @@
-// Package handler реализует обработку команд, которые поступают от пользователя.
+// Package cyclehandler реализует обработку команд, которые поступают от пользователя, в режиме интерактивного терминала.
 // Команда разбивается на атрибуты и передается в соответствующую функцию в зависимости от ожидаемого результата.
 package cyclehandler
 
@@ -28,6 +28,7 @@ func New() (*storage, error) {
 	}, nil
 }
 
+// Update запускает горутину для обновления слайса в структуре актуальной информаией из JSON.
 func (s *storage) Update() {
 	go func() {
 		var err error
@@ -41,7 +42,7 @@ func (s *storage) Update() {
 	}()
 }
 
-// Read выполняет чтение команд из терминала до тех пор, пока ввод будет пустым,
+// read выполняет чтение команд из терминала до тех пор, пока ввод будет пустым,
 // и возвращает прочитанную команду в виде строки.
 // При вводе пустой строки в терминал выведется подсказка для пользователя.
 func read() string {
@@ -54,7 +55,7 @@ func read() string {
 			return input
 		}
 
-		fmt.Println("Чтобы получить информацию о доступных командах, введите help")
+		fmt.Println("To get information about available commands, type help")
 	}
 }
 
@@ -99,9 +100,9 @@ func splitInput(input string) []string {
 // В иных случаях функция вызывает соответствующий метод в зависимости от команды пользователя
 // и выводит результат в терминал.
 func (s *storage) Handle() error {
-	fmt.Println("Task Manager Started")
+	//fmt.Println("Task Manager Started")
 	for {
-		fmt.Print("Введите команду: ")
+		fmt.Print("Enter the command: ")
 		input := read()
 		elements := splitInput(input)
 
@@ -182,15 +183,15 @@ func (s *storage) Handle() error {
 			fmt.Println(`	Add "<Task name>"
 	Update <Task Index> "<New Task Name>" <New Task Status>
 		Task Statuses:
-			0 - Не начато
-			1 - В процессе
-			2 - Выполнено
+			0 - Not started
+			1 - In progress
+			2 - Done
 	Delete <Task Index>
 	UpdateStatus <Task Index> <New Task Status>
 		Task Statuses:
-			0 - Не начато
-			1 - В процессе
-			2 - Выполнено
+			0 - Not started
+			1 - In progress
+			2 - Done
 	AllTasks
 	DoneTasks
 	NotDoneTasks
@@ -200,7 +201,7 @@ func (s *storage) Handle() error {
 		case "exit":
 			return nil
 		default:
-			fmt.Println("Введена некорректная команда")
+			fmt.Println(filemanager.ErrInvalidCommand)
 		}
 	}
 }

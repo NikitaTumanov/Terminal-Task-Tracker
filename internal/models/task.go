@@ -4,7 +4,7 @@ import "time"
 
 type TaskStatus int
 
-// Task структура позволяет воздавать объекты этого типа и преобразовывать их в формат JSON.
+// Task структура описывает сущность Task.
 type Task struct {
 	Index  int        `json:"index"`
 	Name   string     `json:"name"`
